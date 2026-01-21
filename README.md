@@ -12,7 +12,5 @@ To do:
 Note: Still work in progress, as always an initial version is on the public branch but the more up to date version with bugs is in the Dev branch.
 
 <img width="355" height="351" alt="image" src="https://github.com/user-attachments/assets/51e81c57-c959-4461-bb29-65d3e2f81eae" />
-
 <img width="241" height="640" alt="image" src="https://github.com/user-attachments/assets/0c79de58-03cd-49c8-9b92-e3e6633e5543" />
-
 <img width="240" height="1225" alt="image" src="https://github.com/user-attachments/assets/f0814bdb-2b66-4d68-96a1-d8a72c88b03f" />
