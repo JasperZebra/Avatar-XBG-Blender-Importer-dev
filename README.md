@@ -1,4 +1,4 @@
-# Avatar-XBG-Blender-Importer
+# Avatar-XBG-Blender-Importer by Quiet Joker
 An XBG model importer for James Cameron's Avatar: The Game. Updated with AI from it's original Blender 2.49b source.
 
 Origianlly you would need an old blender version like Blender 2.49b and a special library to be able to load the 3D models into blender but since it's a super old version of blender and no one knows how the script worked/barely. I decided to update the script to make it work with modern Blender 5.0
@@ -9,7 +9,7 @@ To do:
 2. Fix texture placement/reverse engineering. (more on that on the xbm viewer)
 3. Fix bug of multiple duplicate textures.
 
-Note: Still work in progress, as always an initial version is on the public branch but the more up to date version with bugs is in the Dev branch.
+Note: Still work in progress, as always an initial version is on the public branch but the more up to date version with bugs is in the Dev branch. Seems to work on Far Cry 3 and Far Cry 2 just fine.
 
 <img width="1541" height="1193" alt="image" src="https://github.com/user-attachments/assets/849e5eb0-53f4-48fc-b622-3aeea6acb86b" />
 <img width="240" height="1225" alt="image" src="https://github.com/user-attachments/assets/f0814bdb-2b66-4d68-96a1-d8a72c88b03f" />
