@@ -137,7 +137,7 @@ class XBTConverter:
             temp_dir = tempfile.gettempdir()
             orphaned = 0
             for filename in os.listdir(temp_dir):
-                if filename.startswith('xbg_temp_') or filename.startswith('xbg_import_temp_'):
+                if filename.startswith('xbg_temp_') or filename.startswith('xbg_import_'):
                     filepath = os.path.join(temp_dir, filename)
                     try:
                         if os.path.isfile(filepath):

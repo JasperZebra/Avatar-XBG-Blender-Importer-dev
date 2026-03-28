@@ -22,4 +22,5 @@ class BinaryReader:
     def f(self, n):return self._unpack(f'<{n}f', self._read(n * 4))
     def B(self, n):return self._unpack(f'<{n}B', self._read(n))
     def b(self, n):return self._unpack(f'<{n}b', self._read(n))
+    def raw(self, n):return self._read(n)  # NEW: Read raw bytes without unpacking
     def word(self, length):return self._read(length).split(b'\x00', 1)[0].decode('utf-8', errors='ignore')
