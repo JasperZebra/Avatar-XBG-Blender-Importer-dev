@@ -3,7 +3,7 @@ import struct
 bl_info = {
     "name": "XBG Importer",
     "author": "Quiet Joker",
-    "version": (2, 3, 0),  # V2.3: Bug fixes (13), export normals, LOD peek, damage state toggle
+    "version": (2, 3, 0),  # V2.3: Bug fixes (13), export normals, LOD peek, vertex compaction
     "blender": (5, 0, 0),
     "location": "View3D > Sidebar > XBG Import",
     "description": "Import XBG models from James Cameron's Avatar The Game",
@@ -441,48 +441,6 @@ class XBG_OT_PeekLODs(bpy.types.Operator):
         return 0
 
 
-class XBG_OT_ToggleDamageState(bpy.types.Operator):
-    """Toggle viewport visibility between STATE01 (normal) and STATE02 (damaged) meshes.
-    Lets you preview how the model looks in each damage state without manually
-    hunting through the outliner.
-    """
-    bl_idname = "xbg.toggle_damage_state"
-    bl_label = "Preview Damage State"
-    bl_description = "Toggle between normal (STATE01) and damaged (STATE02) mesh visibility"
-    bl_options = {'REGISTER', 'UNDO'}
-
-    def execute(self, ctx):
-        state01 = [o for o in ctx.scene.objects if o.get("xbg_damage_state") == 1]
-        state02 = [o for o in ctx.scene.objects if o.get("xbg_damage_state") == 2]
-
-        if not state01 and not state02:
-            self.report({'WARNING'},
-                        "No damage state meshes found — import a file containing STATE01/STATE02 meshes first")
-            return {'CANCELLED'}
-
-        # If any STATE01 mesh is currently visible, we are showing NORMAL → switch to DAMAGED.
-        # Otherwise, switch back to NORMAL.
-        showing_normal = any(not o.hide_viewport for o in state01) if state01 else False
-
-        if showing_normal:
-            for o in state01:
-                o.hide_viewport = True
-                o.hide_render = True
-            for o in state02:
-                o.hide_viewport = False
-                o.hide_render = False
-            self.report({'INFO'}, f"Showing DAMAGED state ({len(state02)} mesh(es))")
-        else:
-            for o in state01:
-                o.hide_viewport = False
-                o.hide_render = False
-            for o in state02:
-                o.hide_viewport = True
-                o.hide_render = True
-            self.report({'INFO'}, f"Showing NORMAL state ({len(state01)} mesh(es))")
-
-        return {'FINISHED'}
-
 
 class XBG_PT_Panel(bpy.types.Panel):
     bl_label = "XBG Import"
@@ -578,20 +536,6 @@ class XBG_PT_Panel(bpy.types.Panel):
             b.label(text="Select an imported XBG mesh", icon='INFO')
             b.enabled = False
 
-        # Damage state preview — shown whenever tagged meshes exist in the scene
-        has_state01 = any(o.get("xbg_damage_state") == 1 for o in ctx.scene.objects)
-        has_state02 = any(o.get("xbg_damage_state") == 2 for o in ctx.scene.objects)
-        if has_state01 or has_state02:
-            l.separator()
-            db = l.box()
-            db.label(text="Damage States:", icon='FORCE_HARMONIC')
-            # Show which state is currently active
-            state01_visible = has_state01 and any(
-                not o.hide_viewport for o in ctx.scene.objects if o.get("xbg_damage_state") == 1
-            )
-            current = "NORMAL (STATE01)" if state01_visible else "DAMAGED (STATE02)"
-            db.label(text=f"Viewing: {current}", icon='HIDE_OFF')
-            db.operator("xbg.toggle_damage_state", text="Toggle Damage State", icon='LOOP_FORWARDS')
 
 
 class XBG_PT_DebugPanel(bpy.types.Panel):
@@ -721,7 +665,6 @@ classes = (
     XBG_OT_MergeSelectedMesh,
     XBG_OT_Export,
     XBG_OT_PeekLODs,
-    XBG_OT_ToggleDamageState,
     XBG_PT_Panel,
     XBG_PT_DebugPanel,
 )
