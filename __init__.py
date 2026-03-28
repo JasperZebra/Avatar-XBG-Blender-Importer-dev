@@ -3,7 +3,7 @@ import struct
 bl_info = {
     "name": "XBG Importer",
     "author": "Quiet Joker",
-    "version": (2, 3, 0),  # V2.3: Bug fixes (13), export normals, LOD peek, vertex compaction
+    "version": (2, 0, 0),  # V2.0: Bug fixes (13), export normals, LOD peek, vertex compaction
     "blender": (5, 0, 0),
     "location": "View3D > Sidebar > XBG Import",
     "description": "Import XBG models from James Cameron's Avatar The Game",
