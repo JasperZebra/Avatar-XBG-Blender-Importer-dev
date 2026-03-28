@@ -16,7 +16,6 @@ A Blender 5.0 add-on for importing (and re-exporting) XBG 3D models from **James
 - HD texture support (`_mip0` variants)
 - Bounding box and bounding sphere visualization
 - XML assembly support for weapon/part files
-- **Damage state preview** — toggle between STATE01 (normal) and STATE02 (damaged) meshes
 - MB2O skeleton mode for files with bind matrix data
 - Vertex compaction — removes unused vertices for cleaner editing while preserving correct export positions
 - Export normals — recalculated from Blender geometry and re-encoded into the file
