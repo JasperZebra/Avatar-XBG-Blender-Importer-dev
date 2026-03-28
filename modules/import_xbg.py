@@ -38,9 +38,7 @@ class XBGData:
         self.bounding_spheres = []
         self.chunks = []
         self.bind_matrices = []
-        # FEATURE 4: damage state parameters (or None)
-        self.damage_params = None
-        # FEATURE 5: per-name bboxes {lod_index: [(bbox_min, bbox_max, metric, name)]}
+        # per-name bboxes {lod_index: [(bbox_min, bbox_max, metric, name)]}
         self.lod_name_bboxes = {}
 
 
@@ -106,7 +104,6 @@ class XBGParser:
                     (
                         self.data.sub_mesh_list,
                         self.data.lod_names,
-                        self.data.damage_params,
                         self.data.lod_name_bboxes,
                     ) = parse_dnks_chunk(g, self.data.lod_count)
                 
@@ -310,8 +307,7 @@ class XBGBlenderImporter:
             xb, xm2b, xmi2b, xmi2n, sp, fp,
             data.vert_pos_scale, data.uv_trans, data.uv_scale, iad, data.lod_names,
             compact_vertices,
-            data.damage_params,   # FEATURE 4
-            data.lod_name_bboxes, # FEATURE 5
+            data.lod_name_bboxes,
         )
         
         fn and mos and dbg_flip(mos)
@@ -469,7 +465,7 @@ class XBGBlenderImporter:
     def create_meshes(self, meshes, ao, mns, imo=False, df="", lt=True, lhd=True,
                       xb={}, xm2b={}, xmi2b={}, xmi2n={}, sp=False, fp="",
                       vps=1.0, uvt=0.0, uvs=1.0, iad=False, lod_names={}, compact_vertices=True,
-                      damage_params=None, lod_name_bboxes={}):
+                      lod_name_bboxes={}):
         vlog.log(f"\n=== CREATING BLENDER MESHES ===")
         
         if compact_vertices:
@@ -539,9 +535,6 @@ class XBGBlenderImporter:
                         "hpsb_offset": mesh.hpsb_chunk_offset,
                         "vertex_mapping": mapping_for_blender,
                     }
-
-                    # FEATURE 4: damage state tagging
-                    self._tag_damage_state(obj, mn, damage_params)
 
                     imo and setattr(obj, 'rotation_euler', (0, 0, math.radians(180)))
 
@@ -642,9 +635,6 @@ class XBGBlenderImporter:
                     "hpsb_offset": mesh.hpsb_chunk_offset,
                     "vertex_mapping": mapping_for_blender,
                 }
-
-                # FEATURE 4: damage state tagging
-                self._tag_damage_state(obj, mn, damage_params)
 
                 imo and setattr(obj, 'rotation_euler', (0, 0, math.radians(180)))
 
@@ -759,29 +749,6 @@ class XBGBlenderImporter:
             uv_layer.data.foreach_set("uv", uv_flat)
         except Exception as e:
             vlog.log(f"  {name} import failed: {e}")
-
-    # ------------------------------------------------------------------
-    # FEATURE 4: Tag damage-state objects with custom properties
-    # STATE01 = normal/undamaged (visible by default)
-    # STATE02 = damaged (hidden by default, game swaps at runtime)
-    # ------------------------------------------------------------------
-    def _tag_damage_state(self, obj, name, damage_params):
-        """Detect STATE01/STATE02 in mesh name and store metadata."""
-        if 'STATE02' in name:
-            obj["xbg_damage_state"] = 2
-            obj["xbg_damage_visible"] = False
-            obj.hide_viewport = True   # Hidden by default (game enables on damage)
-            obj.hide_render = True
-            if damage_params:
-                obj["xbg_damage_threshold"]  = damage_params['threshold']
-                obj["xbg_damage_transition"] = damage_params['transition']
-                obj["xbg_damage_offset"]     = damage_params['offset']
-                obj["xbg_damage_scale"]      = damage_params['scale']
-            vlog.log(f"  Tagged STATE02 (hidden): {name}")
-        elif 'STATE01' in name:
-            obj["xbg_damage_state"] = 1
-            obj["xbg_damage_visible"] = True
-            vlog.log(f"  Tagged STATE01 (visible): {name}")
 
     def setup_material_textures(self, m2s, df, lhd=True, iad=False):
         mf = os.path.join(df, "graphics", "_materials")
