@@ -302,19 +302,17 @@ def parse_sdol_chunk(g,meshes,lod_names={}):
         lod_display = lod_names.get(lod, [f"LOD{lod}"])[0] if lod in lod_names and lod_names[lod] else f"LOD{lod}"
         vlog.log(f"      {lod_display}: {', '.join(parts_info)}")
 def parse_dnks_chunk(g, lod_count):
-    """Parse DNKS chunk including LOD name entries, damage parameters, and per-name bboxes.
+    """Parse DNKS chunk including LOD name entries and per-name bboxes.
 
-    Returns: (sub_mesh_list, lod_names_dict, damage_params, lod_name_bboxes)
+    Returns: (sub_mesh_list, lod_names_dict, lod_name_bboxes)
       sub_mesh_list   : list-of-lists of SubMesh
       lod_names_dict  : {lod_index: [name, ...]}
-      damage_params   : dict with keys 'count_id','threshold','transition','offset','scale'
-                        or None if not present
       lod_name_bboxes : {lod_index: [(bbox_min, bbox_max, metric, name), ...]}
     """
     g.i(2); g.word(4); g.i(4); sub_mesh_list = []
     if lod_count == 0:
         vlog.log("Found DNKS chunk but LOD count is 0, skipping")
-        return sub_mesh_list, {}, None, {}
+        return sub_mesh_list, {}, {}
     vlog.log(f"\n=== DNKS CHUNK (Skinning) ===\nProcessing {lod_count} LOD levels")
     for n in range(lod_count):
         lod_submeshes = []; mat_count = g.i(1)[0]
@@ -331,7 +329,7 @@ def parse_dnks_chunk(g, lod_count):
         sub_mesh_list.append(lod_submeshes)
     
     # ----------------------------------------------------------------
-    # Parse LOD names, per-name bounding boxes, and damage parameters
+    # Parse LOD names and per-name bounding boxes
     # (all live inside the DNKS chunk per V4.0 spec)
     #
     # LOD name entry structure (V4.0 VERIFIED):
@@ -341,16 +339,12 @@ def parse_dnks_chunk(g, lod_count):
     #   +0x20  int32     Reserved = 0  (4 bytes)
     #   +0x24  int32     String length (4 bytes)   ← pos in scan
     #   +0x28  char[]    Name string
-    #
-    # Damage params (20 bytes) are located immediately before the
-    # first LOD name entry (only present in files with STATE01/02).
     # ----------------------------------------------------------------
     lod_names_dict = {}
-    lod_name_bboxes = {}  # FEATURE 5: {lod_idx: [(bbox_min, bbox_max, metric, name)]}
-    damage_params = None  # FEATURE 4
+    lod_name_bboxes = {}  # {lod_idx: [(bbox_min, bbox_max, metric, name)]}
 
     try:
-        vlog.log(f"\n=== LOD NAMES & DAMAGE PARAMS ===\nSearching inside DNKS chunk...")
+        vlog.log(f"\n=== LOD NAMES ===\nSearching inside DNKS chunk...")
         saved_pos = g.tell()
         lookahead_data = g.raw(65536)  # up to 64 KB
         g.seek(saved_pos)
@@ -427,32 +421,6 @@ def parse_dnks_chunk(g, lod_count):
             except Exception:
                 pos += 1; continue
 
-        # FEATURE 4: Detect damage parameters (20 bytes before first name entry)
-        if name_entries:
-            first_entry_pos = name_entries[0]['offset']  # pos of str_len
-            # First entry base = str_len_pos - 36 bytes of header
-            # Damage params are 20 bytes before that base
-            dmg_start = first_entry_pos - 36 - 20
-            if dmg_start >= 0:
-                try:
-                    raw = lookahead_data[dmg_start:dmg_start+20]
-                    count_id = struct.unpack('<i', raw[0:4])[0]
-                    threshold, transition, offset_adj, scale_adj = struct.unpack('<ffff', raw[4:20])
-                    # Basic sanity: threshold and transition should be positive and bounded
-                    if 0 < threshold < 10000 and 0 < transition < 100:
-                        damage_params = {
-                            'count_id':   count_id,
-                            'threshold':  threshold,
-                            'transition': transition,
-                            'offset':     offset_adj,
-                            'scale':      scale_adj,
-                        }
-                        vlog.log(f"  FEATURE 4 - Damage params found:"
-                                 f" threshold={threshold:.3f} transition={transition:.3f}s"
-                                 f" offset={offset_adj:.4f} scale={scale_adj:.4f}")
-                except Exception:
-                    pass
-
         # Organise into dicts
         for entry in name_entries:
             lod = entry['lod_index']
@@ -477,8 +445,7 @@ def parse_dnks_chunk(g, lod_count):
                 vlog.log(f"  LOD {lod}: {len(names)} name(s)")
                 for i, n in enumerate(names):
                     if i < 3 or len(names) <= 5:
-                        state_tag = " [STATE01]" if 'STATE01' in n else (" [STATE02]" if 'STATE02' in n else "")
-                        vlog.log(f"    [{i}] {n}{state_tag}")
+                        vlog.log(f"    [{i}] {n}")
                     elif i == 3:
                         vlog.log(f"    ... ({len(names)-3} more)")
                         break
@@ -492,4 +459,4 @@ def parse_dnks_chunk(g, lod_count):
         for lod in range(lod_count):
             lod_names_dict[lod] = [f"LOD{lod}"]
 
-    return sub_mesh_list, lod_names_dict, damage_params, lod_name_bboxes
+    return sub_mesh_list, lod_names_dict, lod_name_bboxes
