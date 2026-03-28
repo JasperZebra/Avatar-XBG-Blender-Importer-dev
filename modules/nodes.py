@@ -5,6 +5,10 @@ from .xbt import XBTConverter
 class BlenderMaterialSetup:
     @staticmethod
     def setup_material(mat,xbm_data,data_folder,load_hd_textures=True,import_as_dds=False):
+        # CRITICAL FIX: Check if material already has textures set up to prevent duplicates
+        if mat.get('xbg_material_setup_complete'):
+            return  # Material already configured, skip to prevent duplicate nodes
+        
         if not mat.use_nodes:mat.use_nodes=True
         nodes=mat.node_tree.nodes;links=mat.node_tree.links
         bsdf=next((n for n in nodes if n.type=='BSDF_PRINCIPLED'),None)
@@ -26,6 +30,9 @@ class BlenderMaterialSetup:
             use_color_multiply=False
             if xbm_data.illumination_color:r,g,b=xbm_data.illumination_color;is_black=(abs(r)<0.01 and abs(g)<0.01 and abs(b)<0.01);is_white=(abs(r-1.0)<0.01 and abs(g-1.0)<0.01 and abs(b-1.0)<0.01);use_color_multiply=not (is_black or is_white)
             tex_y_offset=BlenderMaterialSetup._setup_bio_emission(nodes,links,bsdf,xbm_data.textures['bio'],xbm_data.illumination_color if use_color_multiply else None,data_folder,tex_y_offset,load_hd_textures,import_as_dds)
+        
+        # Mark material as setup complete to prevent duplicate nodes
+        mat['xbg_material_setup_complete'] = True
     @staticmethod
     def _load_texture_node(nodes,texture_path,data_folder,location,non_color=False,load_hd_textures=True,import_as_dds=False):
         actual_path=XBTConverter.find_mip0_variant(texture_path,data_folder) if load_hd_textures else texture_path
