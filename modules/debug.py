@@ -239,8 +239,7 @@ def display_file_info(chunks,fn,filepath=""):
                         lod_int5 = read_int(file_data, lod_pos + 20)
                         
                         # Interpret header[0] as float - this is the LOD distance
-                        import struct as st
-                        distance = st.unpack('<f', st.pack('<I', lod_int0))[0]
+                        distance = struct.unpack('<f', struct.pack('<I', lod_int0))[0]
                         
                         lines.append(f"  LOD{lod_idx}: Dist={distance:.1f} Verts={vert_count} Stride={vert_stride}")
                         
@@ -332,8 +331,6 @@ def display_file_info(chunks,fn,filepath=""):
                 lines.append(f"  Trans={uv_trans:.6f} Scale={uv_scale:.6f}")
                 lines.append(f"  ChunkInts: [{chunk_int1}, {chunk_int2}]")
                 lines.append(f"  SkipInts: [{skip_int1}, {skip_int2}]")
-                lines.append(f"  UV_Trans: {uv_trans:.6f}")
-                lines.append(f"  UV_Scale: {uv_scale:.6f}")
     
     lines.append("")
     lines.append(f"File Size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
