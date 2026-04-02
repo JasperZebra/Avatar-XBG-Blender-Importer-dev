@@ -309,7 +309,28 @@ class XBGBlenderImporter:
             compact_vertices,
             data.lod_name_bboxes,
         )
-        
+
+        # When separate_primitives is OFF, join all created mesh objects into one
+        # and weld shared boundary vertices with merge-by-distance.
+        # Only produce separate objects when sp=True.
+        if not sp and mos and len(mos) > 1:
+            ds = ctx.scene.xbg_debug_settings
+            vlog.log(f"\n=== JOINING {len(mos)} MESH OBJECTS INTO ONE ===")
+            bpy.ops.object.select_all(action='DESELECT')
+            for obj in mos:
+                obj.select_set(True)
+            bpy.context.view_layer.objects.active = mos[0]
+            bpy.ops.object.join()
+            joined_obj = bpy.context.active_object
+            merge_dist = ds.merge_distance
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.remove_doubles(threshold=merge_dist)
+            bpy.ops.object.mode_set(mode='OBJECT')
+            joined_obj["xbg_joined"] = True  # flag: merged import, re-inject not available
+            vlog.log(f"  Joined into: {joined_obj.name} (merge distance: {merge_dist})")
+            mos = [joined_obj]
+
         fn and mos and dbg_flip(mos)
         
         ds = ctx.scene.xbg_debug_settings
@@ -501,14 +522,14 @@ class XBGBlenderImporter:
                     # Get actual mesh name from LOD names using the submesh index
                     if mesh.lod_level in lod_names and mesh.name_index < len(lod_names[mesh.lod_level]):
                         mesh_name = lod_names[mesh.lod_level][mesh.name_index]
-                        mn = f"{mesh_name}_Prim{pi}"
+                        mn = mesh_name
                     else:
                         # Fallback to generic name
                         lod_display = f"LOD{mesh.lod_level}"
                         if mesh.sub_part_index >= 0:
-                            mn = f"Mesh_{lod_display}_P{mesh.part_number}_Sub{mesh.sub_part_index}_Prim{pi}_{skinning_type}"
+                            mn = f"Mesh_{lod_display}_P{mesh.part_number}_Sub{mesh.sub_part_index}_{skinning_type}"
                         else:
-                            mn = f"Mesh_{lod_display}_P{mesh.part_number}_Prim{pi}_{skinning_type}"
+                            mn = f"Mesh_{lod_display}_P{mesh.part_number}_{skinning_type}"
                     
                     me = bpy.data.meshes.new(mn)
                     obj = bpy.data.objects.new(mn, me)
