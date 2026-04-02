@@ -483,7 +483,14 @@ class XBG_PT_Panel(bpy.types.Panel):
         b.label(text="Export (Re-Inject):", icon='EXPORT')
         obj, es = ctx.active_object, ctx.scene.xbg_export_settings
         
-        if obj and "xbg_data" in obj:
+        if obj and "xbg_joined" in obj:
+            wb = b.box()
+            wb.alert = True
+            wb.label(text="Re-inject unavailable", icon='ERROR')
+            wb.label(text="Imported as joined mesh.")
+            wb.label(text="Enable Separate Primitives")
+            wb.label(text="and re-import to edit & inject.")
+        elif obj and "xbg_data" in obj:
             b.label(text=f"Linked: {os.path.basename(obj['xbg_data']['filepath'])}", icon='LINKED')
             m = obj["xbg_data"].to_dict()
             ps, imo = m.get("pos_scale", 1.0), m.get("import_mesh_only", False)
